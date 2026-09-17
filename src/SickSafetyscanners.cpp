@@ -32,6 +32,8 @@
 
 #include <sick_safetyscanners2/SickSafetyscanners.hpp>
 
+#include <cmath>
+
 namespace sick {
 rcl_interfaces::msg::SetParametersResult SickSafetyscanners::parametersCallback(
     std::vector<rclcpp::Parameter> parameters) {
@@ -40,6 +42,22 @@ rcl_interfaces::msg::SetParametersResult SickSafetyscanners::parametersCallback(
   result.reason = "";
 
   bool update_sensor_config = false;
+
+  // validate parameters before mutating the configuration
+  for (const auto &param : parameters) {
+    if (param.get_name() != "range_min") {
+      continue;
+    }
+
+    const double range_min = param.as_double();
+    if (!std::isfinite(range_min) || range_min < 0.0 ||
+        range_min >= m_config.m_range_max) {
+      result.successful = false;
+      result.reason = "range_min must be finite, non-negative, and less than "
+                      "the sensor maximum range";
+      return result;
+    }
+  }
 
   for (const auto &param : parameters) {
     if (param.get_name().rfind("diagnostic_updater.", 0) == 0) {
@@ -79,6 +97,8 @@ rcl_interfaces::msg::SetParametersResult SickSafetyscanners::parametersCallback(
       update_sensor_config = true;
     } else if (param.get_name() == "time_offset") {
       m_config.m_time_offset = param.as_double();
+    } else if (param.get_name() == "range_min") {
+      m_config.m_range_min = param.as_double();
     } else if (param.get_name() == "general_system_state") {
       // TODO improve
       m_config.m_communications_settings.features =
@@ -323,8 +343,13 @@ void SickSafetyscanners::readTypeCodeSettings() {
   m_device->requestTypeCode(type_code);
   m_config.m_communications_settings.e_interface_type =
       type_code.getInterfaceType();
-  m_config.m_range_min = 0.1;
   m_config.m_range_max = type_code.getMaxRange();
+  if (!std::isfinite(m_config.m_range_min) || m_config.m_range_min < 0.0 ||
+      m_config.m_range_min >= m_config.m_range_max) {
+    throw std::invalid_argument(
+        "range_min must be finite, non-negative, and less than the sensor "
+        "maximum range");
+  }
 }
 
 void SickSafetyscanners::readPersistentConfig() {

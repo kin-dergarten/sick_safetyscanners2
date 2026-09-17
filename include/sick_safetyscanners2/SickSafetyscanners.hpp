@@ -118,6 +118,7 @@ public:
     node.template declare_parameter<double>("angle_start", 0.0);
     node.template declare_parameter<double>("angle_end", 0.0);
     node.template declare_parameter<double>("time_offset", 0.0);
+    node.template declare_parameter<double>("range_min", 0.1);
     node.template declare_parameter<bool>("general_system_state", true);
     node.template declare_parameter<bool>("derived_settings", true);
     node.template declare_parameter<bool>("measurement_data", true);
@@ -206,6 +207,9 @@ public:
 
     node.template get_parameter<double>("time_offset", m_config.m_time_offset);
     RCLCPP_INFO(getLogger(), "time_offset: %f", m_config.m_time_offset);
+
+    node.template get_parameter<double>("range_min", m_config.m_range_min);
+    RCLCPP_INFO(getLogger(), "range_min: %f", m_config.m_range_min);
 
     // Features
     bool general_system_state;

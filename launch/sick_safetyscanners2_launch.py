@@ -21,6 +21,7 @@ def generate_launch_description():
                  "angle_start": 0.0,
                  "angle_end": 0.0,
                  "time_offset": 0.0,
+                 "range_min": 0.1,
                  "general_system_state": True,
                  "derived_settings": True,
                  "measurement_data": True,
